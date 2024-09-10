@@ -10,17 +10,26 @@ const port = 3000;
 const JWT_SECRET = 'your_secret_key';
 
 // Middleware
-app.use(cors());
+app.use(cors(
+  {origin: 'http://localhost:4200', // Your Angular frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'], // Include Authorization header
+  }
+));
 app.use(express.json());
 
 // In-memory storage for users and chat messages
-let users = [{ username: 'user1', password: bcrypt.hashSync('password1', 8), role: 'customer' },
-             { username: 'support', password: bcrypt.hashSync('password2', 8), role: 'support' }];
+let users = [{ username: 'user', password: bcrypt.hashSync('user', 8), role: 'customer' },
+             { username: 'support', password: bcrypt.hashSync('support', 8), role: 'support' }];
 let chatHistory = [];
 
 // Middleware to verify JWT
 const verifyToken = (req, res, next) => {
-  const token = req.headers['x-access-token'];
+  const authHeader = req.headers['authorization']; // Extract Authorization header
+  if (!authHeader) return res.status(403).send({ auth: false, message: 'No token provided.' });
+
+  // Ensure the token is in the format 'Bearer <token>'
+  const token = authHeader.split(' ')[1]; // Split the header to get the token part
   if (!token) return res.status(403).send({ auth: false, message: 'No token provided.' });
 
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
