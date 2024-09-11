@@ -58,13 +58,20 @@ app.post('/api/login', (req, res) => {
 
 // HTTP endpoint to send a message (requires auth)
 app.post('/api/chat', verifyToken, (req, res) => {
-  const message = `${req.userRole}: ${req.body.message}`;
-  chatHistory.push(message);
+    const messageObject = {
+    sender: req.userId, // Use the decoded userId (username) from JWT
+    role: req.userRole, // Use the decoded user role from JWT
+    message: req.body.message,
+    timestamp: new Date().toISOString(), // Add a timestamp for reference
+  };
 
-  // Broadcast the message to all WebSocket clients
-  wsServer.clients.forEach(client => {
+  // Store the message in chat history
+  chatHistory.push(messageObject);
+
+  // Broadcast the message object to all WebSocket clients
+  wsServer.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
+      client.send(JSON.stringify(messageObject)); // Send as JSON string
     }
   });
 
