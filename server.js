@@ -57,31 +57,31 @@ app.post('/api/login', (req, res) => {
 });
 
 // HTTP endpoint to send a message (requires auth)
-app.post('/api/chat', verifyToken, (req, res) => {
-    const messageObject = {
-    sender: req.userId, // Use the decoded userId (username) from JWT
-    role: req.userRole, // Use the decoded user role from JWT
-    message: req.body.message,
-    timestamp: new Date().toISOString(), // Add a timestamp for reference
-  };
+// app.post('/api/chat', verifyToken, (req, res) => {
+//     const messageObject = {
+//     sender: req.userId, // Use the decoded userId (username) from JWT
+//     role: req.userRole, // Use the decoded user role from JWT
+//     message: req.body.message,
+//     timestamp: new Date().toISOString(), // Add a timestamp for reference
+//   };
 
-  // Store the message in chat history
-  chatHistory.push(messageObject);
+//   // Store the message in chat history
+//   chatHistory.push(messageObject);
 
-  // Broadcast the message object to all WebSocket clients
-  wsServer.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(messageObject)); // Send as JSON string
-    }
-  });
+//   // Broadcast the message object to all WebSocket clients
+//   wsServer.clients.forEach((client) => {
+//     if (client.readyState === WebSocket.OPEN) {
+//       client.send(JSON.stringify(messageObject)); // Send as JSON string
+//     }
+//   });
 
-  res.status(200).json({ success: true });
-});
+//   res.status(200).json({ success: true });
+// });
 
 // HTTP endpoint to get chat history (requires auth)
-app.get('/api/chat/history', verifyToken, (req, res) => {
-  res.status(200).json(chatHistory);
-});
+// app.get('/api/chat/history', verifyToken, (req, res) => {
+//   res.status(200).json(chatHistory);
+// });
 
 // Start HTTP server
 const server = app.listen(port, () => {
@@ -97,7 +97,8 @@ wsServer.on('connection', (ws) => {
 
   // Send existing chat history to the new client
   chatHistory.forEach(message => {
-    ws.send(message);
+    console.log(JSON.stringify(message))
+    ws.send(JSON.stringify(message)); // Convert the object to a JSON string before sending
   });
 
   ws.on('message', (message) => {
@@ -106,7 +107,7 @@ wsServer.on('connection', (ws) => {
     // Broadcast the received message to all WebSocket clients
     wsServer.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
+        client.send(JSON.stringify(message)); // Convert message to a JSON string before sending
       }
     });
   });
